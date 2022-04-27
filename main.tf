@@ -83,7 +83,6 @@ resource "aws_security_group" "sg0" {
   name        = "grsi-security-group"
   tags        = {}
   tags_all    = {}
-  vpc_id      = "vpc-055e9db3c61f9ab61"
 
   timeouts {}
 }
@@ -93,7 +92,7 @@ resource "aws_instance" "instance0" {
   ami                                  = "ami-0f9fc25dd2506cf6d"
   availability_zone                    = "us-east-1d"
   instance_type                        = "t2.micro"
-  key_name                             = "GRSI-APRIL-22"
+  key_name                             = "GRSI"
   security_groups                      = [
     aws_security_group.sg0.name,
   ]
