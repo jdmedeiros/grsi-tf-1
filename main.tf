@@ -1,16 +1,18 @@
-
-resource "aws_eip" "eip0" {
-  network_border_group = "us-east-1"
-  tags                 = {}
-  tags_all             = {}
-  vpc                  = true
-
-  timeouts {}
+resource "aws_vpc" "vpc0" {
+  cidr_block       = "192.168.1.0/24"
+  tags = {
+    name = "vpc0"
+  }
 }
 
-# aws_security_group.sg0:
-resource "aws_security_group" "sg0" {
-  description = "Grupo de seguranca para o exercicio um"
+resource "aws_subnet" "sub0" {
+  vpc_id = aws_vpc.vpc0.id
+  cidr_block = "192.168.1.0/25"
+  availability_zone = "us-east-1f"
+}
+
+resource "aws_security_group" "secg0" {
+  vpc_id      = aws_vpc.vpc0.id
   egress      = [
     {
       cidr_blocks      = [
@@ -29,94 +31,46 @@ resource "aws_security_group" "sg0" {
   ingress     = [
     {
       cidr_blocks      = [
-        "0.0.0.0/0",
-      ]
-      description      = "Permitir todo o iCMP"
-      from_port        = -1
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "icmp"
-      security_groups  = []
-      self             = false
-      to_port          = -1
-    },
-    {
-      cidr_blocks      = [
         "78.29.147.32/32",
       ]
-      description      = "Permitir todo o DNS vindo do meu IP"
-      from_port        = 53
+      description      = ""
+      from_port        = 0
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
-      protocol         = "udp"
+      protocol         = "-1"
       security_groups  = []
       self             = false
-      to_port          = 53
-    },
-    {
-      cidr_blocks      = [
-        "78.29.147.32/32",
-      ]
-      description      = "Permitir todo o HTTPS vindo do meu IP"
-      from_port        = 443
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "tcp"
-      security_groups  = []
-      self             = false
-      to_port          = 443
-    },
-    {
-      cidr_blocks      = []
-      description      = "Permitir todo o HTTP vindo de IPv6"
-      from_port        = 80
-      ipv6_cidr_blocks = [
-        "::/0",
-      ]
-      prefix_list_ids  = []
-      protocol         = "tcp"
-      security_groups  = []
-      self             = false
-      to_port          = 80
+      to_port          = 0
     },
   ]
-  name        = "grsi-security-group"
-  tags        = {}
-  tags_all    = {}
+  name        = "secg0"
 
-  timeouts {}
 }
 
-# aws_instance.instance0:
-resource "aws_instance" "instance0" {
-  ami                                  = "ami-0f9fc25dd2506cf6d"
-  availability_zone                    = "us-east-1d"
-  instance_type                        = "t2.micro"
+resource "aws_instance" "winskills0" {
+  depends_on = [ aws_security_group.secg0 ]
+  ami                                  = "ami-08ed5c5dd62794ec0"
+  associate_public_ip_address          = true
+#  availability_zone                    = "us-east-1f"
+  instance_type                        = "t2.small"
   key_name                             = "GRSI"
-  security_groups                      = [
-    aws_security_group.sg0.name,
-  ]
-  vpc_security_group_ids               = [
-    aws_security_group.sg0.id,
-  ]
+  subnet_id = aws_subnet.sub0.id
 
-  ebs_block_device {
-    delete_on_termination = true
-    device_name           = "/dev/sdb"
-    volume_size           = 12
-    volume_type           = "gp3"
-  }
-
+  vpc_security_group_ids = [
+    aws_security_group.secg0.id,
+  ]
   root_block_device {
     delete_on_termination = true
-    volume_size           = 10
-    volume_type           = "gp2"
+    encrypted             = false
+    iops                  = 100
+    tags                  = {}
+    throughput            = 0
+    volume_size           = 30
   }
 
 }
 
-# aws_eip_association.eip0_assoc:
-resource "aws_eip_association" "eip0_assoc" {
-  allocation_id        = aws_eip.eip0.id
-instance_id          = aws_instance.instance0.id
+resource "aws_eip" "eip0" {
+  instance = aws_instance.winskills0.id
+  vpc = true
 }
