@@ -1,3 +1,12 @@
+variable "vpc_id" {
+  description = "The ID of the VPC where resources will be created"
+  type        = string
+  default     = "vpc-0d5dcbf472763c928"
+}
+
+data "aws_vpc" "target" {
+  id = var.vpc_id
+}
 
 resource "aws_eip" "eip0" {
   network_border_group = "us-east-1"
@@ -84,18 +93,16 @@ resource "aws_security_group" "sg0" {
   tags        = {}
   tags_all    = {}
 
+  vpc_id = data.aws_vpc.target.id
   timeouts {}
 }
 
 # aws_instance.instance0:
 resource "aws_instance" "instance0" {
   ami                                  = "ami-0f9fc25dd2506cf6d"
-  availability_zone                    = "us-east-1d"
   instance_type                        = "t2.micro"
   key_name                             = "GRSI"
-  security_groups                      = [
-    aws_security_group.sg0.name,
-  ]
+  subnet_id                            = "subnet-01456de77f953cad1"
   vpc_security_group_ids               = [
     aws_security_group.sg0.id,
   ]
@@ -112,11 +119,10 @@ resource "aws_instance" "instance0" {
     volume_size           = 10
     volume_type           = "gp2"
   }
-
 }
 
 # aws_eip_association.eip0_assoc:
 resource "aws_eip_association" "eip0_assoc" {
   allocation_id        = aws_eip.eip0.id
-instance_id          = aws_instance.instance0.id
+  instance_id          = aws_instance.instance0.id
 }
